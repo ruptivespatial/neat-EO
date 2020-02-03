@@ -137,7 +137,7 @@ Contributions and Services:
 ---------------------------
 
 - Pull Requests are welcome ! Feel free to send code...
-  Don't hesitate either to initiate a prior discussion via <a href="https://gitter.im/DataPink/Neat-EO">gitter</a> or ticket on any implementation question.
+  Don't hesitate either to initiate a prior discussion via <a href="https://gitter.im/Neat-EO-pink/community">gitter</a> or ticket on any implementation question.
   And give also a look at <a href="https://github.com/datapink/Neat-EO.pink/blob/master/docs/makefile.md">Makefile rules</a>.
 
 - If you want to collaborate through code production and maintenance on a long term basis, please get in touch, co-edition with an ad hoc governance can be considered.
