@@ -157,7 +157,7 @@ def tiles_to_granules(tiles, pg):
     tiles = [str(tile.z) + "-" + str(tile.x) + "-" + str(tile.y) + "\n" for tile in tiles]
     for feature in supermercado.uniontiles.union(tiles, True):
         geom = json.dumps(feature["geometry"])
-        query = """SELECT id FROM rsp.s2_granules
+        query = """SELECT id FROM neo.s2_granules
                    WHERE ST_Intersects(geom, ST_SetSRID(ST_GeomFromGeoJSON('{}'), 4326))""".format(
             geom
         )
