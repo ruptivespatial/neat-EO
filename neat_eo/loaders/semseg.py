@@ -28,13 +28,15 @@ class SemSeg(torch.utils.data.Dataset):
                 (tile, path) for tile, path in self.metatiles_paths if tile_is_neighboured(tile, self.metatiles_paths)
             ]
         assert len(self.tiles_paths), "Empty Dataset"
-        self.cover = [tile for tile, path in self.tiles_paths]  # export purpose
+        self.cover = [tile for tile, path in self.tiles_paths]
 
         self.tiles = {}
         num_channels = 0
         for channel in config["channels"]:
             path = os.path.join(root, channel["name"])
-            self.tiles[channel["name"]] = [(tile, path) for tile, path in tiles_from_dir(path, cover=cover, xyz_path=True)]
+            self.tiles[channel["name"]] = [
+                (tile, path) for tile, path in tiles_from_dir(path, cover=self.cover, xyz_path=True)
+            ]
             num_channels += len(channel["bands"])
 
         self.shape_in = (num_channels,) + tuple(ts)  # C,W,H
@@ -42,7 +44,7 @@ class SemSeg(torch.utils.data.Dataset):
 
         if self.mode in ["train", "eval"]:
             path = os.path.join(root, "labels")
-            self.tiles["labels"] = [(tile, path) for tile, path in tiles_from_dir(path, cover=cover, xyz_path=True)]
+            self.tiles["labels"] = [(tile, path) for tile, path in tiles_from_dir(path, cover=self.cover, xyz_path=True)]
 
             for channel in config["channels"]:  # Order images and labels accordingly
                 self.tiles[channel["name"]].sort(key=lambda tile: tile[0])
@@ -62,7 +64,7 @@ class SemSeg(torch.utils.data.Dataset):
         for channel in self.config["channels"]:
 
             image_channel = None
-            tile, path = self.tiles_paths[i]
+            tile, path = self.tiles[channel["name"]][i]
             bands = None if not channel["bands"] else channel["bands"]
 
             if self.metatiles:
