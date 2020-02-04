@@ -7,13 +7,13 @@ import numpy as np
 from importlib import import_module
 
 
-def to_tensor(config, ts, image, mask=None, data_augmentation=False, resize=False):
+def to_tensor(config, ts, image, mask=None, da=False, resize=False):
 
     assert len(ts) == 2  # W,H
     assert image is not None
 
     # Resize, ToTensor and Data Augmentation
-    if data_augmentation:
+    if da:
         assert mask is not None
 
         try:

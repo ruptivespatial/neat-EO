@@ -275,7 +275,7 @@ def tile_image_from_url(requests_session, url, timeout=10):
 
 
 def tile_is_neighboured(tile, tiles):
-    """Check if a tile is, or not, surrounded by others tiles"""
+    """Check if a tile is surrounded by others tiles"""
 
     tiles = dict(tiles)
     try:

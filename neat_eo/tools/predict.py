@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from torch.nn.parallel import DistributedDataParallel
 
 from neat_eo.core import load_config, load_module, check_classes, check_channels, make_palette, web_ui, Logs
-from neat_eo.tiles import tile_label_to_file, tiles_from_csv, tiles_from_dir, tile_is_neighboured
+from neat_eo.tiles import tile_label_to_file, tiles_from_csv
 
 
 def add_parser(subparser, formatter_class):
@@ -111,11 +111,6 @@ def main(args):
     palette, transparency = make_palette([classe["color"] for classe in config["classes"]])
     args.cover = [tile for tile in tiles_from_csv(os.path.expanduser(args.cover))] if args.cover else None
 
-    if args.metatiles and not args.keep_borders:
-        dataset_path = os.path.join(os.path.expanduser(args.dataset), config["channels"][0]["name"])
-        tiles = [tile for tile in tiles_from_dir(dataset_path, args.cover, xyz_path=True)]
-        args.cover = [tile for tile, path in tiles if tile_is_neighboured(tile, tiles)]
-
     args.out = os.path.expanduser(args.out)
     log = Logs(os.path.join(args.out, "log"))
 
@@ -130,13 +125,13 @@ def main(args):
     dataset = getattr(loader, chkpt["loader"])(
         config, chkpt["shape_in"][1:3], args.dataset, args.cover, mode="predict", metatiles=args.metatiles
     )
+
     mp.spawn(gpu_worker, nprocs=world_size, args=(world_size, lock_file, args, config, dataset, palette, transparency))
 
     if os.path.exists(lock_file):
         os.remove(lock_file)
 
-    tiles = args.cover if args.cover else [tile for tile, path in dataset.tiles[config["channels"][0]["name"]]]
-    if not args.no_web_ui and tiles:
+    if not args.no_web_ui and dataset.cover:
         template = "leaflet.html" if not args.web_ui_template else args.web_ui_template
         base_url = args.web_ui_base_url if args.web_ui_base_url else "."
-        web_ui(args.out, base_url, tiles, tiles, "png", template)
+        web_ui(args.out, base_url, dataset.cover, dataset.cover, "png", template)
