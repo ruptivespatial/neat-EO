@@ -274,12 +274,31 @@ def tile_image_from_url(requests_session, url, timeout=10):
         return None
 
 
+def tile_is_neighboured(tile, tiles):
+    """Check if a tile is, or not, surrounded by others tiles"""
+
+    tiles = dict(tiles)
+    try:
+        # 3x3 matrix (upper, center, bottom) x (left, center, right)
+        tiles[mercantile.Tile(x=int(tile.x) - 1, y=int(tile.y) - 1, z=int(tile.z))]  # ul
+        tiles[mercantile.Tile(x=int(tile.x) + 0, y=int(tile.y) - 1, z=int(tile.z))]  # uc
+        tiles[mercantile.Tile(x=int(tile.x) + 1, y=int(tile.y) - 1, z=int(tile.z))]  # ur
+        tiles[mercantile.Tile(x=int(tile.x) - 1, y=int(tile.y) + 0, z=int(tile.z))]  # cl
+        tiles[mercantile.Tile(x=int(tile.x) + 1, y=int(tile.y) + 0, z=int(tile.z))]  # cr
+        tiles[mercantile.Tile(x=int(tile.x) - 1, y=int(tile.y) + 1, z=int(tile.z))]  # bl
+        tiles[mercantile.Tile(x=int(tile.x) + 0, y=int(tile.y) + 1, z=int(tile.z))]  # bc
+        tiles[mercantile.Tile(x=int(tile.x) + 1, y=int(tile.y) + 1, z=int(tile.z))]  # br
+    except KeyError:
+        return False
+
+    return True
+
+
 def tile_image_buffer(tile, tiles, bands):
-    """Buffers a tile image adding borders on all sides based on adjacent tiles."""
+    """Buffers a tile image adding borders on all sides based on adjacent tile, or zeros padded if not possible."""
 
-    def tile_image_adjacent(tile, dx, dy, tiles, bands):
-        """Retrieves an adjacent tile image if exists from a tile store, or None."""
-
+    def tile_image_neighbour(tile, dx, dy, tiles, bands):
+        """Retrieves neighbour tile image if exists."""
         try:
             path = tiles[mercantile.Tile(x=int(tile.x) + dx, y=int(tile.y) + dy, z=int(tile.z))]
         except KeyError:
@@ -288,18 +307,16 @@ def tile_image_buffer(tile, tiles, bands):
         return tile_image_from_file(path, bands)
 
     tiles = dict(tiles)
-    x, y, z = map(int, [tile.x, tile.y, tile.z])
-
     # 3x3 matrix (upper, center, bottom) x (left, center, right)
-    ul = tile_image_adjacent(tile, -1, -1, tiles, bands)
-    uc = tile_image_adjacent(tile, +0, -1, tiles, bands)
-    ur = tile_image_adjacent(tile, +1, -1, tiles, bands)
-    cl = tile_image_adjacent(tile, -1, +0, tiles, bands)
-    cc = tile_image_adjacent(tile, +0, +0, tiles, bands)
-    cr = tile_image_adjacent(tile, +1, +0, tiles, bands)
-    bl = tile_image_adjacent(tile, -1, +1, tiles, bands)
-    bc = tile_image_adjacent(tile, +0, +1, tiles, bands)
-    br = tile_image_adjacent(tile, +1, +1, tiles, bands)
+    ul = tile_image_neighbour(tile, -1, -1, tiles, bands)
+    uc = tile_image_neighbour(tile, +0, -1, tiles, bands)
+    ur = tile_image_neighbour(tile, +1, -1, tiles, bands)
+    cl = tile_image_neighbour(tile, -1, +0, tiles, bands)
+    cc = tile_image_neighbour(tile, +0, +0, tiles, bands)
+    cr = tile_image_neighbour(tile, +1, +0, tiles, bands)
+    bl = tile_image_neighbour(tile, -1, +1, tiles, bands)
+    bc = tile_image_neighbour(tile, +0, +1, tiles, bands)
+    br = tile_image_neighbour(tile, +1, +1, tiles, bands)
 
     b = len(bands)
     ts = cc.shape[1]

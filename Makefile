@@ -101,9 +101,10 @@ it_post:
 	neo export --checkpoint it/pth/checkpoint-00006.pth --type onnx --out it/pth/export.onnx
 	neo predict --config config.toml --bs 8 --checkpoint it/pth/checkpoint-00006.pth --dataset it/predict --out it/predict/masks
 	neo predict --metatiles --config config.toml --bs 8 --checkpoint it/pth/checkpoint-00006.pth --dataset it/predict --out it/predict/masks_meta
-	neo compare --config config.toml --images it/predict/images it/predict/labels it/predict/masks --mode stack --labels it/predict/labels --masks it/predict/masks_meta --out it/predict/compare
-	neo compare --images it/predict/images it/predict/compare --mode side --out it/predict/compare_side
-	neo compare --config config.toml --mode list --labels it/predict/labels --max Building QoD 0.50 --masks it/predict/masks_meta --geojson --out it/predict/compare/tiles.json
+	neo cover --dir it/predict/masks_meta --out it/predict/cover
+	neo compare --cover it/predict/cover --config config.toml --images it/predict/images it/predict/labels it/predict/masks --mode stack --labels it/predict/labels --masks it/predict/masks_meta --out it/predict/compare
+	neo compare --cover it/predict/cover --images it/predict/images it/predict/compare --mode side --out it/predict/compare_side
+	neo compare --cover it/predict/cover --config config.toml --mode list --labels it/predict/labels --max Building QoD 0.50 --masks it/predict/masks_meta --geojson --out it/predict/compare/tiles.json
 	cp it/predict/compare/tiles.json it/predict/compare_side/tiles.json
 	neo vectorize --type Building --config config.toml --masks it/predict/masks_meta --out it/predict/building.json
 	neo vectorize --type Road --config config.toml --masks it/predict/masks_meta --out it/predict/road.json

@@ -167,7 +167,7 @@ To kill GPU processes: neo info --processes | xargs sudo kill -9
 ```
 usage: neo predict [-h] [--dataset DATASET] --checkpoint CHECKPOINT
                    [--config CONFIG] [--cover COVER] --out OUT [--metatiles]
-                   [--bs BS] [--workers WORKERS]
+                   [--keep_borders] [--bs BS] [--workers WORKERS]
                    [--web_ui_base_url WEB_UI_BASE_URL]
                    [--web_ui_template WEB_UI_TEMPLATE] [--no_web_ui]
 
@@ -183,6 +183,7 @@ Inputs:
 Outputs:
  --out OUT                          output directory path [required]
  --metatiles                        if set, use surrounding tiles to avoid margin effects
+ --keep_borders                     if set, with --metatiles, force borders tiles to be kept
 
 Performances:
  --bs BS                            batch size [default: CPU/GPU]

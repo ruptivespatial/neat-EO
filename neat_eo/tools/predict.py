@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from torch.nn.parallel import DistributedDataParallel
 
 from neat_eo.core import load_config, load_module, check_classes, check_channels, make_palette, web_ui, Logs
-from neat_eo.tiles import tile_label_to_file, tiles_from_csv
+from neat_eo.tiles import tile_label_to_file, tiles_from_csv, tiles_from_dir, tile_is_neighboured
 
 
 def add_parser(subparser, formatter_class):
@@ -30,6 +30,7 @@ def add_parser(subparser, formatter_class):
     out = parser.add_argument_group("Outputs")
     out.add_argument("--out", type=str, required=True, help="output directory path [required]")
     out.add_argument("--metatiles", action="store_true", help="if set, use surrounding tiles to avoid margin effects")
+    out.add_argument("--keep_borders", action="store_true", help="if set, with --metatiles, force borders tiles to be kept")
 
     perf = parser.add_argument_group("Performances")
     perf.add_argument("--bs", type=int, help="batch size [default: CPU/GPU]")
@@ -109,6 +110,11 @@ def main(args):
 
     palette, transparency = make_palette([classe["color"] for classe in config["classes"]])
     args.cover = [tile for tile in tiles_from_csv(os.path.expanduser(args.cover))] if args.cover else None
+
+    if args.metatiles and not args.keep_borders:
+        dataset_path = os.path.join(os.path.expanduser(args.dataset), config["channels"][0]["name"])
+        tiles = [tile for tile in tiles_from_dir(dataset_path, args.cover, xyz_path=True)]
+        args.cover = [tile for tile, path in tiles if tile_is_neighboured(tile, tiles)]
 
     args.out = os.path.expanduser(args.out)
     log = Logs(os.path.join(args.out, "log"))
