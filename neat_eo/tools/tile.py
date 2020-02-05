@@ -31,6 +31,7 @@ def add_parser(subparser, formatter_class):
     inp = parser.add_argument_group("Inputs")
     inp.add_argument("--rasters", type=str, required=True, nargs="+", help="path to raster files to tile [required]")
     inp.add_argument("--cover", type=str, help="path to csv tiles cover file, to filter tiles to tile [optional]")
+    inp.add_argument("--bands", type=str, help="list of 1-n index bands to select (e.g 1,2,3) [optional]")
 
     out = parser.add_argument_group("Output")
     out.add_argument("--zoom", type=int, required=True, help="zoom level of tiles [required]")
@@ -75,6 +76,10 @@ def is_nodata(image, nodata, threshold, keep_borders=False):
 def main(args):
 
     assert not (args.label and args.format), "Format option not supported for label, output must be kept as png"
+    try:
+        args.bands = list(map(int, args.bands.split(","))) if args.bands else None
+    except:
+        raise ValueError("invalid --args.bands value")
 
     if not args.workers:
         args.workers = min(os.cpu_count(), len(args.rasters))
@@ -99,21 +104,22 @@ def main(args):
         os.makedirs(args.out, exist_ok=True)
     log = Logs(os.path.join(args.out, "log"), out=sys.stderr)
 
-    bands = -1
+    raster = rasterio_open(os.path.expanduser(args.rasters[0]))
+    args.bands = args.bands if args.bands else raster.indexes
+    print("rasters:{} bands:{}".format(args.rasters, args.bands), file=sys.stderr, flush=True)
+
     skip = []
     tiles_map = {}
     for path in args.rasters:
-        raster = rasterio_open(path)
+        raster = rasterio_open(os.path.expanduser(path))
+        assert set(args.bands).issubset(set(raster.indexes)), "Missing bands in raster {}".format(path)
+
         try:
             w, s, e, n = transform_bounds(raster.crs, "EPSG:4326", *raster.bounds)
         except:
             log.log("WARNING: missing or invalid raster projection, SKIPPING: {}".format(path))
             skip.append(path)
             continue
-
-        if bands != -1:
-            assert bands == len(raster.indexes), "Coverage must be bands consistent"
-        bands = len(raster.indexes)
 
         tiles = [mercantile.Tile(x=x, y=y, z=z) for x, y, z in mercantile.tiles(w, s, e, n, args.zoom)]
         tiles = list(set(tiles) & set(cover)) if cover else tiles
@@ -125,15 +131,12 @@ def main(args):
             tiles_map[tile_key].append(path)
     assert len(tiles_map), "Nothing left to tile"
 
-    if args.label:
-        bands = 1
-    if not args.label:
-        if bands == 1:
-            ext = "png" if args.format is None else args.format
-        if bands == 3:
-            ext = "webp" if args.format is None else args.format
-        if bands > 3:
-            ext = "tiff" if args.format is None else args.format
+    if len(args.bands) == 1 or args.label:
+        ext = "png" if args.format is None else args.format
+    if len(args.bands) == 3:
+        ext = "webp" if args.format is None else args.format
+    if len(args.bands) > 3:
+        ext = "tiff" if args.format is None else args.format
 
     tiles = []
     progress = tqdm(total=len(tiles_map), ascii=True, unit="tile")
@@ -166,8 +169,10 @@ def main(args):
                     width=width,
                     height=height,
                 )
-                data = warp_vrt.read(out_shape=(len(raster.indexes), width, height), window=warp_vrt.window(w, s, e, n))
 
+                data = warp_vrt.read(
+                    out_shape=(len(args.bands), width, height), indexes=args.bands, window=warp_vrt.window(w, s, e, n)
+                )
                 if data.dtype == "uint16":  # GeoTiff could be 16 bits
                     data = np.uint8(data / 256)
                 elif data.dtype == "uint32":  # or 32 bits
@@ -214,7 +219,7 @@ def main(args):
             if len(tiles_map[tile_key]) == 1:
                 return
 
-            image = np.zeros((width, height, bands), np.uint8)
+            image = np.zeros((width, height, len(args.bands)), np.uint8)
 
             x, y, z = map(int, tile_key)
             for i in range(len(tiles_map[tile_key])):

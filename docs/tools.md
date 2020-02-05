@@ -282,11 +282,11 @@ Web UI:
 ```
 ## neo tile
 ```
-usage: neo tile [-h] --rasters RASTERS [RASTERS ...] [--cover COVER] --zoom
-                ZOOM [--ts TS] [--nodata [0-255]] [--nodata_threshold [0-100]]
-                [--keep_borders] [--format FORMAT] --out OUT [--label]
-                [--config CONFIG] [--workers WORKERS]
-                [--web_ui_base_url WEB_UI_BASE_URL]
+usage: neo tile [-h] --rasters RASTERS [RASTERS ...] [--cover COVER]
+                [--bands BANDS] --zoom ZOOM [--ts TS] [--nodata [0-255]]
+                [--nodata_threshold [0-100]] [--keep_borders]
+                [--format FORMAT] --out OUT [--label] [--config CONFIG]
+                [--workers WORKERS] [--web_ui_base_url WEB_UI_BASE_URL]
                 [--web_ui_template WEB_UI_TEMPLATE] [--no_web_ui]
 
 optional arguments:
@@ -295,6 +295,7 @@ optional arguments:
 Inputs:
  --rasters RASTERS [RASTERS ...]    path to raster files to tile [required]
  --cover COVER                      path to csv tiles cover file, to filter tiles to tile [optional]
+ --bands BANDS                      list of 1-n index bands to select (e.g 1,2,3) [optional]
 
 Output:
  --zoom ZOOM                        zoom level of tiles [required]
