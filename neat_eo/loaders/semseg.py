@@ -27,8 +27,8 @@ class SemSeg(torch.utils.data.Dataset):
             self.tiles_paths = [
                 (tile, path) for tile, path in self.metatiles_paths if tile_is_neighboured(tile, self.metatiles_paths)
             ]
+        self.cover = {tile for tile, path in self.tiles_paths}
         assert len(self.tiles_paths), "Empty Dataset"
-        self.cover = [tile for tile, path in self.tiles_paths]
 
         self.tiles = {}
         num_channels = 0
