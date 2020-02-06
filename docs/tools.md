@@ -198,7 +198,7 @@ Web UI:
 ```
 usage: neo rasterize [-h] --cover COVER [--config CONFIG] --type TYPE
                      [--geojson GEOJSON [GEOJSON ...]] [--sql SQL] [--pg PG]
-                     --out OUT [--append] [--ts TS]
+                     [--buffer BUFFER] --out OUT [--append] [--ts TS]
                      [--web_ui_base_url WEB_UI_BASE_URL]
                      [--web_ui_template WEB_UI_TEMPLATE] [--no_web_ui]
 
@@ -212,10 +212,11 @@ Inputs [either --sql or --geojson is required]:
  --geojson GEOJSON [GEOJSON ...]    path to GeoJSON features files
  --sql SQL                          SQL to retrieve geometry features [e.g SELECT geom FROM table WHERE ST_Intersects(TILE_GEOM, geom)]
  --pg PG                            If set, override config PostgreSQL dsn.
+ --buffer BUFFER                    Add a Geometrical Buffer around each Features (distance in meter)
 
 Outputs:
  --out OUT                          output directory path [required]
- --append                           Append to existing tile if any, useful to multiclass labels
+ --append                           Append to existing tile if any, useful to multiclasses labels
  --ts TS                            output tile size [default: 512,512]
 
 Web UI:

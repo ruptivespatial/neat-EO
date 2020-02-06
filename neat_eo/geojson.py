@@ -5,18 +5,23 @@ from rasterio.transform import from_bounds
 
 import mercantile
 from supermercado import burntiles
+from shapely.geometry import shape, mapping
 
 from neat_eo.tiles import tile_bbox
 
 
-def geojson_parse_feature(zoom, srid, feature_map, feature):
+def geojson_parse_feature(zoom, srid, feature_map, feature, buffer):
     def geojson_parse_polygon(zoom, srid, feature_map, polygon):
 
-        for i, ring in enumerate(polygon["coordinates"]):  # GeoJSON coordinates could be N dimensionals
-            polygon["coordinates"][i] = [[x, y] for point in ring for x, y in zip([point[0]], [point[1]])]
+        if isinstance(polygon["coordinates"], list):  # https://github.com/Toblerity/Shapely/issues/245
+            for i, ring in enumerate(polygon["coordinates"]):  # GeoJSON coordinates could be N dimensionals
+                polygon["coordinates"][i] = [[x, y] for point in ring for x, y in zip([point[0]], [point[1]])]
 
         if srid != 4326:
-            polygon = transform_geom(CRS.from_epsg(srid), CRS.from_epsg(4326), polygon)
+            try:
+                polygon = transform_geom(CRS.from_epsg(srid), CRS.from_epsg(4326), polygon)
+            except:  # negative buffer could lead to empty/invalid geom
+                return feature_map
 
         try:
             for tile in burntiles.burn([{"type": "feature", "geometry": polygon}], zoom=zoom):
@@ -26,7 +31,11 @@ def geojson_parse_feature(zoom, srid, feature_map, feature):
 
         return feature_map
 
-    def geojson_parse_geometry(zoom, srid, feature_map, geometry):
+    def geojson_parse_geometry(zoom, srid, feature_map, geometry, buffer):
+        if buffer:
+            geometry = transform_geom(CRS.from_epsg(srid), CRS.from_epsg(3857), geometry)  # be sure to be planar
+            geometry = mapping(shape(geometry).buffer(buffer))
+            srid = 3857
 
         if geometry["type"] == "Polygon":
             feature_map = geojson_parse_polygon(zoom, srid, feature_map, geometry)
@@ -42,9 +51,9 @@ def geojson_parse_feature(zoom, srid, feature_map, feature):
 
     if feature["geometry"]["type"] == "GeometryCollection":
         for geometry in feature["geometry"]["geometries"]:
-            feature_map = geojson_parse_geometry(zoom, srid, feature_map, geometry)
+            feature_map = geojson_parse_geometry(zoom, srid, feature_map, geometry, buffer)
     else:
-        feature_map = geojson_parse_geometry(zoom, srid, feature_map, feature["geometry"])
+        feature_map = geojson_parse_geometry(zoom, srid, feature_map, feature["geometry"], buffer)
 
     return feature_map
 

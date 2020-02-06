@@ -27,10 +27,11 @@ def add_parser(subparser, formatter_class):
     help = "SQL to retrieve geometry features [e.g SELECT geom FROM table WHERE ST_Intersects(TILE_GEOM, geom)]"
     inp.add_argument("--sql", type=str, help=help)
     inp.add_argument("--pg", type=str, help="If set, override config PostgreSQL dsn.")
+    inp.add_argument("--buffer", type=float, help="Add a Geometrical Buffer around each Features (distance in meter)")
 
     out = parser.add_argument_group("Outputs")
     out.add_argument("--out", type=str, required=True, help="output directory path [required]")
-    out.add_argument("--append", action="store_true", help="Append to existing tile if any, useful to multiclass labels")
+    out.add_argument("--append", action="store_true", help="Append to existing tile if any, useful to multiclasses labels")
     out.add_argument("--ts", type=str, default="512,512", help="output tile size [default: 512,512]")
 
     ui = parser.add_argument_group("Web UI")
@@ -86,7 +87,7 @@ def main(args):
                 srid = geojson_srid(feature_collection)
 
                 for i, feature in enumerate(tqdm(feature_collection["features"], ascii=True, unit="feature")):
-                    feature_map = geojson_parse_feature(zoom, srid, feature_map, feature)
+                    feature_map = geojson_parse_feature(zoom, srid, feature_map, feature, args.buffer)
 
         features = args.geojson
 
