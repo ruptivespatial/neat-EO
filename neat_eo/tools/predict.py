@@ -123,7 +123,13 @@ def main(args):
     lock_file = os.path.abspath(os.path.join(args.out, str(uuid.uuid1())))
 
     dataset = getattr(loader, chkpt["loader"])(
-        config, chkpt["shape_in"][1:3], args.dataset, args.cover, mode="predict", metatiles=args.metatiles
+        config,
+        chkpt["shape_in"][1:3],
+        args.dataset,
+        args.cover,
+        mode="predict",
+        metatiles=args.metatiles,
+        keep_borders=args.keep_borders,
     )
 
     mp.spawn(gpu_worker, nprocs=world_size, args=(world_size, lock_file, args, config, dataset, palette, transparency))

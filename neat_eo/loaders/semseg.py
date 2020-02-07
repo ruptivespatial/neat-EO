@@ -22,11 +22,12 @@ class SemSeg(torch.utils.data.Dataset):
 
         path = os.path.join(root, config["channels"][0]["name"])
         self.tiles_paths = [(tile, path) for tile, path in tiles_from_dir(path, cover=cover, xyz_path=True)]
-        if metatiles and not keep_borders:
+        if metatiles:
             self.metatiles_paths = self.tiles_paths
-            self.tiles_paths = [
-                (tile, path) for tile, path in self.metatiles_paths if tile_is_neighboured(tile, self.metatiles_paths)
-            ]
+            if not keep_borders:
+                self.tiles_paths = [
+                    (tile, path) for tile, path in self.metatiles_paths if tile_is_neighboured(tile, self.metatiles_paths)
+                ]
         self.cover = {tile for tile, path in self.tiles_paths}
         assert len(self.tiles_paths), "Empty Dataset"
 
