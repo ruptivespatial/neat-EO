@@ -224,37 +224,6 @@ Web UI:
  --web_ui_template WEB_UI_TEMPLATE  alternate Web UI template path
  --no_web_ui                        desactivate Web UI output
 ```
-## neo sat
-```
-usage: neo sat [-h] [--config CONFIG] [--pg PG] [--cover COVER]
-               [--granules GRANULES [GRANULES ...]] [--scenes SCENES]
-               [--level {2A,3A}] [--start START] [--end END] [--clouds CLOUDS]
-               [--limit LIMIT] [--download] [--workers WORKERS]
-               [--timeout TIMEOUT] [--out [OUT]]
-
-optional arguments:
- -h, --help                          show this help message and exit
- --config CONFIG                     path to config file [required]
- --pg PG                             If set, override config PostgreSQL dsn.
- --out [OUT]                         output directory path [required if download is set]
-
-Spatial extent [one among the following is required]:
- --cover COVER                       path to csv tiles cover file
- --granules GRANULES [GRANULES ...]  Military Grid Granules, (e.g 31TFL)
- --scenes SCENES                     Path to a Scenes UUID file
-
-Filters:
- --level {2A,3A}                     Processing Level
- --start START                       YYYY-MM-DD starting date
- --end END                           YYYY-MM-DD end date
- --clouds CLOUDS                     max threshold for cloud coverage [0-100]
- --limit LIMIT                       max number of results per granule
-
-Download:
- --download                          if set, perform also download operation.
- --workers WORKERS                   number of workers [default: 4]
- --timeout TIMEOUT                   download request timeout (in seconds) [default: 180]
-```
 ## neo subset
 ```
 usage: neo subset [-h] --dir DIR --cover COVER [--copy] [--delete] [--quiet]
