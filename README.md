@@ -1,7 +1,7 @@
 <a href="https://twitter.com/neat_eo"><img src="https://img.shields.io/badge/Follow-neat_eo-ff69b4.svg" /></a> <a href="https://gitter.im/Neat-EO-pink/community"><img src="https://img.shields.io/gitter/room/Neat-EO-pink/community.svg?color=ff69b4&style=popout" /></a>
 
 <h1 align='center'>Neat-EO.pink</h1>
-<h2 align='center'>Computer Vision framework for GeoSpatial imagery, at scale</h2>
+<h2 align='center'>Efficient AI4EO OpenSource framework</h2>
 
 <p align=center>
   <img src="https://pbs.twimg.com/media/DpjonykWwAANpPr.jpg" alt="Neat-EO.pink buildings segmentation from Imagery" />
@@ -82,9 +82,6 @@ pip3 install Neat-EO.pink && export PATH=$PATH:~/.local/bin
 # NVIDIA GPU Drivers [mandatory]
 wget http://us.download.nvidia.com/XFree86/Linux-x86_64/435.21/NVIDIA-Linux-x86_64-435.21.run
 sudo sh NVIDIA-Linux-x86_64-435.21.run -a -q --ui=none
-
-# Extra CLI tools [used in tutorials]
-sudo apt install -y gdal-bin osmium-tool
 
 # HTTP Server [for WebUI rendering]
 sudo apt install -y apache2 && sudo ln -s ~ /var/www/html/neo
