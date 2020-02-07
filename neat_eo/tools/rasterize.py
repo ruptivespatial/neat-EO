@@ -101,6 +101,11 @@ def main(args):
 
         features = args.sql
 
+    if not len(feature_map):
+        log.log("-----------------------------------------------")
+        log.log("NOTICE: no feature to rasterize, seems peculiar")
+        log.log("-----------------------------------------------")
+
     log.log("neo rasterize - rasterizing {} from {} on cover {}".format(args.type, features, args.cover))
     with open(os.path.join(os.path.expanduser(args.out), args.type.lower() + "_cover.csv"), mode="w") as cover:
 
