@@ -99,8 +99,9 @@ it_post:
 	@echo "==================================================================================="
 	neo export --checkpoint it/pth/checkpoint-00006.pth --type jit --out it/pth/export.jit
 	neo export --checkpoint it/pth/checkpoint-00006.pth --type onnx --out it/pth/export.onnx
-	neo predict --config config.toml --bs 8 --checkpoint it/pth/checkpoint-00006.pth --dataset it/predict --out it/predict/masks
-	neo predict --metatiles --config config.toml --bs 8 --checkpoint it/pth/checkpoint-00006.pth --dataset it/predict --out it/predict/masks_meta
+	neo predict --config config.toml --checkpoint it/pth/checkpoint-00006.pth --dataset it/predict --out it/predict/masks
+	neo predict --metatiles --config config.toml --checkpoint it/pth/checkpoint-00006.pth --dataset it/predict --out it/predict/masks_meta
+	neo predict --metatiles --keep_borders --config config.toml --checkpoint it/pth/checkpoint-00006.pth --dataset it/predict --out it/predict/masks_keep
 	neo cover --dir it/predict/masks_meta --out it/predict/cover
 	neo compare --cover it/predict/cover --config config.toml --images it/predict/images it/predict/labels it/predict/masks --mode stack --labels it/predict/labels --masks it/predict/masks_meta --out it/predict/compare
 	neo compare --cover it/predict/cover --images it/predict/images it/predict/compare --mode side --out it/predict/compare_side
