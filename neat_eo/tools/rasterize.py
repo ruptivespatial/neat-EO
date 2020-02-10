@@ -6,6 +6,8 @@ import collections
 
 import numpy as np
 from tqdm import tqdm
+from functools import partial
+import concurrent.futures as futures
 
 import psycopg2
 
@@ -34,12 +36,26 @@ def add_parser(subparser, formatter_class):
     out.add_argument("--append", action="store_true", help="Append to existing tile if any, useful to multiclasses labels")
     out.add_argument("--ts", type=str, default="512,512", help="output tile size [default: 512,512]")
 
+    perf = parser.add_argument_group("Performances")
+    perf.add_argument("--workers", type=int, help="number of workers [default: CPU]")
+
     ui = parser.add_argument_group("Web UI")
     ui.add_argument("--web_ui_base_url", type=str, help="alternate Web UI base URL")
     ui.add_argument("--web_ui_template", type=str, help="alternate Web UI template path")
     ui.add_argument("--no_web_ui", action="store_true", help="desactivate Web UI output")
 
     parser.set_defaults(func=main)
+
+
+def worker_spatial_index(zoom, buffer, geojson_file):
+    geojson = open(os.path.expanduser(geojson_file))
+    feature_collection = json.load(geojson)
+    srid = geojson_srid(feature_collection)
+
+    feature_map = collections.defaultdict(list)
+    for i, feature in enumerate(tqdm(feature_collection["features"], ascii=True, unit="feature")):
+        feature_map = geojson_parse_feature(zoom, srid, feature_map, feature, buffer)
+    return feature_map
 
 
 def main(args):
@@ -49,6 +65,7 @@ def main(args):
 
     config = load_config(args.config)
     check_classes(config)
+    args.workers = min(os.cpu_count(), args.workers) if args.workers else os.cpu_count()
 
     args.pg = config["auth"]["pg"] if not args.pg and "pg" in config["auth"].keys() else args.pg
     assert not (args.sql and not args.pg), "With --sql option, --pg dsn setting must also be provided"
@@ -77,19 +94,18 @@ def main(args):
         zoom = tiles[0].z
         assert not [tile for tile in tiles if tile.z != zoom], "Unsupported zoom mixed cover. Use PostGIS instead"
 
+        features = args.geojson
         feature_map = collections.defaultdict(list)
 
-        log.log("neo rasterize - Compute spatial index")
-        for geojson_file in args.geojson:
-
-            with open(os.path.expanduser(geojson_file)) as geojson:
-                feature_collection = json.load(geojson)
-                srid = geojson_srid(feature_collection)
-
-                for i, feature in enumerate(tqdm(feature_collection["features"], ascii=True, unit="feature")):
-                    feature_map = geojson_parse_feature(zoom, srid, feature_map, feature, args.buffer)
-
-        features = args.geojson
+        workers = min(args.workers, len(args.geojson))
+        log.log("neo rasterize - Compute spatial index with {} workers".format(workers))
+        with futures.ProcessPoolExecutor(workers) as executor:
+            for fm in executor.map(partial(worker_spatial_index, zoom, args.buffer), args.geojson):
+                for k, v in fm.items():
+                    try:
+                        feature_map[k] += v
+                    except KeyError:
+                        feature_map[k] = v
 
     if args.sql:
         conn = psycopg2.connect(args.pg)
