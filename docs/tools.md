@@ -111,6 +111,31 @@ Web UI:
  --web_ui_template WEB_UI_TEMPLATE  alternate Web UI template path
  --no_web_ui                        desactivate Web UI output
 ```
+## neo eval
+```
+usage: neo eval [-h] [--config CONFIG] --dataset DATASET [--cover COVER]
+                [--classes_weights CLASSES_WEIGHTS]
+                [--tiles_weights TILES_WEIGHTS] [--loader LOADER] [--bs BS]
+                [--metrics METRICS [METRICS ...]] --checkpoint CHECKPOINT
+                [--workers WORKERS]
+
+optional arguments:
+ -h, --help                         show this help message and exit
+ --config CONFIG                    path to config file [required, if no global config setting]
+
+Dataset:
+ --dataset DATASET                  dataset path [required]
+ --cover COVER                      path to csv tiles cover file, to filter tiles dataset on [optional]
+ --classes_weights CLASSES_WEIGHTS  classes weights separated with comma or 'auto' [optional]
+ --tiles_weights TILES_WEIGHTS      path to csv tiles cover file, with specials weights on [optional]
+ --loader LOADER                    dataset loader name [if set override config file value]
+
+Eval:
+ --bs BS                            batch size
+ --metrics METRICS [METRICS ...]    metric name (e.g QoD IoU MCC)
+ --checkpoint CHECKPOINT            path to model checkpoint.
+ --workers WORKERS                  number of pre-processing images workers, per GPU [default: batch size]
+```
 ## neo export
 ```
 usage: neo export [-h] --checkpoint CHECKPOINT [--type {onnx,jit,pth}]
@@ -199,7 +224,7 @@ Web UI:
 usage: neo rasterize [-h] --cover COVER [--config CONFIG] --type TYPE
                      [--geojson GEOJSON [GEOJSON ...]] [--sql SQL] [--pg PG]
                      [--buffer BUFFER] --out OUT [--append] [--ts TS]
-                     [--web_ui_base_url WEB_UI_BASE_URL]
+                     [--workers WORKERS] [--web_ui_base_url WEB_UI_BASE_URL]
                      [--web_ui_template WEB_UI_TEMPLATE] [--no_web_ui]
 
 optional arguments:
@@ -218,6 +243,9 @@ Outputs:
  --out OUT                          output directory path [required]
  --append                           Append to existing tile if any, useful to multiclasses labels
  --ts TS                            output tile size [default: 512,512]
+
+Performances:
+ --workers WORKERS                  number of workers [default: CPU]
 
 Web UI:
  --web_ui_base_url WEB_UI_BASE_URL  alternate Web UI base URL
@@ -290,8 +318,7 @@ Web UI:
 ```
 ## neo train
 ```
-usage: neo train [-h] [--config CONFIG] [--train_dataset TRAIN_DATASET]
-                 [--eval_dataset EVAL_DATASET] [--cover COVER]
+usage: neo train [-h] [--config CONFIG] --dataset DATASET [--cover COVER]
                  [--classes_weights CLASSES_WEIGHTS]
                  [--tiles_weights TILES_WEIGHTS] [--loader LOADER] [--bs BS]
                  [--lr LR] [--ts TS] [--nn NN] [--encoder ENCODER]
@@ -304,11 +331,10 @@ optional arguments:
  --config CONFIG                    path to config file [required, if no global config setting]
 
 Dataset:
- --train_dataset TRAIN_DATASET      train dataset path [needed for train]
- --eval_dataset EVAL_DATASET        eval dataset path [needed for eval]
+ --dataset DATASET                  train dataset path [required]
  --cover COVER                      path to csv tiles cover file, to filter tiles dataset on [optional]
  --classes_weights CLASSES_WEIGHTS  classes weights separated with comma or 'auto' [optional]
- --tiles_weights TILES_WEIGHTS      path to csv tiles cover file, with specials weights on [optional]
+ --tiles_weights TILES_WEIGHTS      path to csv tiles cover file, to apply weights on [optional]
  --loader LOADER                    dataset loader name [if set override config file value]
 
 Hyper Parameters [if set override config file value]:

@@ -15,7 +15,6 @@ from torch.nn.parallel import DistributedDataParallel
 import neat_eo as neo
 from neat_eo.core import load_config, load_module, check_model, check_channels, check_classes, Logs
 from neat_eo.tiles import tiles_from_csv
-from neat_eo.metrics.core import Metrics
 from neat_eo.tools.dataset import compute_classes_weights
 
 
@@ -24,11 +23,10 @@ def add_parser(subparser, formatter_class):
     parser.add_argument("--config", type=str, help="path to config file [required, if no global config setting]")
 
     data = parser.add_argument_group("Dataset")
-    data.add_argument("--train_dataset", type=str, help="train dataset path [needed for train]")
-    data.add_argument("--eval_dataset", type=str, help="eval dataset path [needed for eval]")
+    data.add_argument("--dataset", type=str, required=True, help="train dataset path [required]")
     data.add_argument("--cover", type=str, help="path to csv tiles cover file, to filter tiles dataset on [optional]")
     data.add_argument("--classes_weights", type=str, help="classes weights separated with comma or 'auto' [optional]")
-    data.add_argument("--tiles_weights", type=str, help="path to csv tiles cover file, with specials weights on [optional]")
+    data.add_argument("--tiles_weights", type=str, help="path to csv tiles cover file, to apply weights on [optional]")
     data.add_argument("--loader", type=str, help="dataset loader name [if set override config file value]")
 
     hp = parser.add_argument_group("Hyper Parameters [if set override config file value]")
@@ -87,46 +85,25 @@ def main(args):
 
     assert torch.cuda.is_available(), "No GPU support found. Check CUDA and NVidia Driver install."
     assert torch.distributed.is_nccl_available(), "No NCCL support found. Check your PyTorch install."
-    world_size = torch.cuda.device_count() if args.train_dataset else 1
+    world_size = torch.cuda.device_count()
 
     args.workers = min(config["train"]["bs"] if not args.workers else args.workers, math.floor(os.cpu_count() / world_size))
-    assert args.eval_dataset or args.train_dataset, "Provide at least one dataset"
-
-    if args.eval_dataset and not args.train_dataset and not args.checkpoint:
-        log.log("\n\nNOTICE: No Checkpoint provided for eval only. Seems peculiar.\n\n")
-
-    log.log("neo train/eval on {} GPUs, with {} workers/GPU".format(world_size, args.workers))
+    log.log("neo train on {} GPUs, with {} workers/GPU".format(world_size, args.workers))
     log.log("---")
 
     loader = load_module("neat_eo.loaders.{}".format(config["model"]["loader"].lower()))
 
-    train_dataset = None
-    if args.train_dataset:
-        assert os.path.isdir(os.path.expanduser(args.train_dataset)), "--train_dataset path is not a directory"
-        train_dataset = getattr(loader, config["model"]["loader"])(
-            config, config["model"]["ts"], args.train_dataset, args.cover, args.tiles_weights, "train"
-        )
-        assert len(train_dataset), "Empty or Invalid --train_dataset content"
-        shape_in = train_dataset.shape_in
-        shape_out = train_dataset.shape_out
-        log.log("\nDataSet Training:        {}".format(args.train_dataset))
+    assert os.path.isdir(os.path.expanduser(args.dataset)), "--dataset path is not a directory"
+    dataset = getattr(loader, config["model"]["loader"])(
+        config, config["model"]["ts"], args.dataset, args.cover, args.tiles_weights, "train"
+    )
+    assert len(dataset), "Empty or Invalid --dataset content"
+    shape_in = dataset.shape_in
+    shape_out = dataset.shape_out
+    log.log("\nDataSet:        {}".format(args.dataset))
 
-        if args.classes_weights == "auto":
-            args.classes_weights = compute_classes_weights(args.train_dataset, config["classes"], args.cover, os.cpu_count())
-
-    eval_dataset = None
-    if args.eval_dataset:
-        assert os.path.isdir(os.path.expanduser(args.eval_dataset)), "--eval_dataset path is not a directory"
-        eval_dataset = getattr(loader, config["model"]["loader"])(
-            config, config["model"]["ts"], args.eval_dataset, args.cover, args.tiles_weights, "eval"
-        )
-        assert len(eval_dataset), "Empty or Invalid --eval_dataset content"
-        shape_in = eval_dataset.shape_in
-        shape_out = eval_dataset.shape_out
-        log.log("DataSet Eval:            {}".format(args.eval_dataset))
-
-        if not args.train_dataset and args.classes_weights == "auto":
-            args.classes_weights = compute_classes_weights(args.eval_dataset, config["classes"], args.cover, os.cpu_count())
+    if args.classes_weights == "auto":
+        args.classes_weights = compute_classes_weights(args.dataset, config["classes"], args.cover, os.cpu_count())
 
     log.log("\n--- Input tensor")
     num_channel = 1  # 1-based numerotation
@@ -145,19 +122,15 @@ def main(args):
 
     lock_file = os.path.abspath(os.path.join(args.out, str(uuid.uuid1())))
     mp.spawn(
-        gpu_worker,
-        nprocs=world_size,
-        args=(world_size, lock_file, train_dataset, eval_dataset, shape_in, shape_out, args, config),
+        gpu_worker, nprocs=world_size, args=(world_size, lock_file, dataset, shape_in, shape_out, args, config),
     )
     if os.path.exists(lock_file):
         os.remove(lock_file)
 
 
-def gpu_worker(rank, world_size, lock_file, train_dataset, eval_dataset, shape_in, shape_out, args, config):
+def gpu_worker(rank, world_size, lock_file, dataset, shape_in, shape_out, args, config):
 
     log = Logs(os.path.join(args.out, "log")) if rank == 0 else None
-    csv_train = open(os.path.join(args.out, "train.csv"), mode="a") if train_dataset and rank == 0 else None
-    csv_eval = open(os.path.join(args.out, "eval.csv"), mode="a") if eval_dataset and rank == 0 else None
 
     dist.init_process_group(backend="nccl", init_method="file://" + lock_file, world_size=world_size, rank=rank)
     torch.cuda.set_device(rank)
@@ -165,18 +138,8 @@ def gpu_worker(rank, world_size, lock_file, train_dataset, eval_dataset, shape_i
 
     bs = config["train"]["bs"]
 
-    if train_dataset:
-        sampler = torch.utils.data.distributed.DistributedSampler(train_dataset, num_replicas=world_size, rank=rank)
-        train_loader = DataLoader(
-            train_dataset, batch_size=bs, shuffle=False, drop_last=True, num_workers=args.workers, sampler=sampler
-        )
-    else:
-        train_loader = None
-
-    if eval_dataset:
-        eval_loader = DataLoader(eval_dataset, batch_size=bs, shuffle=False, drop_last=True, num_workers=args.workers)
-    else:
-        eval_loader = None
+    sampler = torch.utils.data.distributed.DistributedSampler(dataset, num_replicas=world_size, rank=rank)
+    loader = DataLoader(dataset, batch_size=bs, shuffle=False, drop_last=True, num_workers=args.workers, sampler=sampler)
 
     nn_module = load_module("neat_eo.nn.{}".format(config["model"]["nn"].lower()))
     nn = getattr(nn_module, config["model"]["nn"])(
@@ -184,26 +147,25 @@ def gpu_worker(rank, world_size, lock_file, train_dataset, eval_dataset, shape_i
     ).cuda(rank)
     nn = DistributedDataParallel(nn, device_ids=[rank], find_unused_parameters=True)
 
-    if train_dataset:
-        optimizer_params = {key: value for key, value in config["train"]["optimizer"].items() if key != "name"}
-        optimizer = getattr(torch.optim, config["train"]["optimizer"]["name"])(nn.parameters(), **optimizer_params)
+    optimizer_params = {key: value for key, value in config["train"]["optimizer"].items() if key != "name"}
+    optimizer = getattr(torch.optim, config["train"]["optimizer"]["name"])(nn.parameters(), **optimizer_params)
 
-        if rank == 0:
-            log.log("\n--- Train ---")
-            for hp in config["train"]:
-                if hp == "da":
-                    da = config["train"]["da"]["name"]
-                    dap = config["train"]["da"]["p"]
-                    log.log("{}{} ({:.2f})".format("da".ljust(25, " "), da, dap))
-                elif hp == "metrics":
-                    log.log("{}{}".format(hp.ljust(25, " "), set(config["train"][hp])))  # aesthetic
-                elif hp != "optimizer":
-                    log.log("{}{}".format(hp.ljust(25, " "), config["train"][hp]))
+    if rank == 0:
+        log.log("\n--- Train ---")
+        for hp in config["train"]:
+            if hp == "da":
+                da = config["train"]["da"]["name"]
+                dap = config["train"]["da"]["p"]
+                log.log("{}{} ({:.2f})".format("da".ljust(25, " "), da, dap))
+            elif hp == "metrics":
+                log.log("{}{}".format(hp.ljust(25, " "), set(config["train"][hp])))  # aesthetic
+            elif hp != "optimizer":
+                log.log("{}{}".format(hp.ljust(25, " "), config["train"][hp]))
 
-            log.log("{}{}".format("optimizer".ljust(25, " "), config["train"]["optimizer"]["name"]))
-            for k, v in optimizer.state_dict()["param_groups"][0].items():
-                if k != "params":
-                    log.log(" - {}{}".format(k.ljust(25 - 3, " "), v))
+        log.log("{}{}".format("optimizer".ljust(25, " "), config["train"]["optimizer"]["name"]))
+        for k, v in optimizer.state_dict()["param_groups"][0].items():
+            if k != "params":
+                log.log(" - {}{}".format(k.ljust(25 - 3, " "), v))
 
     resume = 0
     if args.checkpoint:
@@ -224,118 +186,68 @@ def gpu_worker(rank, world_size, lock_file, train_dataset, eval_dataset, shape_i
     loss_module = load_module("neat_eo.losses.{}".format(config["train"]["loss"].lower()))
     criterion = getattr(loss_module, config["train"]["loss"])().cuda(rank)
 
-    if eval_dataset and not train_dataset:
-        do_epoch(rank, eval_loader, config, args.classes_weights, log, csv_eval, nn, criterion, "eval", 1)
-        dist.destroy_process_group()
-        return
-
     for epoch in range(resume + 1, args.epochs + 1):  # 1-N based
 
-        if train_dataset:
-            if rank == 0:
-                log.log("\n---\nEpoch: {}/{}\n".format(epoch, args.epochs))
+        if rank == 0:
+            log.log("\n---\nEpoch: {}/{}\n".format(epoch, args.epochs))
 
-            sampler.set_epoch(epoch)  # https://github.com/pytorch/pytorch/issues/31232
-            do_epoch(
-                rank, train_loader, config, args.classes_weights, log, csv_train, nn, criterion, "train", epoch, optimizer
-            )
+        sampler.set_epoch(epoch)  # https://github.com/pytorch/pytorch/issues/31232
+        do_epoch(rank, loader, config, args.classes_weights, log, nn, criterion, epoch, optimizer)
 
-            if rank == 0:
-                UUID = uuid.uuid1()
-                states = {
-                    "uuid": UUID,
-                    "model_version": nn.module.version,
-                    "producer_name": "Neat-EO.pink",
-                    "producer_version": neo.__version__,
-                    "model_licence": "MIT",
-                    "domain": "pink.Neat-EO",  # reverse-DNS
-                    "doc_string": nn.module.doc_string,
-                    "shape_in": shape_in,
-                    "shape_out": shape_out,
-                    "state_dict": nn.state_dict(),
-                    "epoch": epoch,
-                    "nn": config["model"]["nn"],
-                    "encoder": config["model"]["encoder"],
-                    "optimizer": optimizer.state_dict(),
-                    "loader": config["model"]["loader"],
-                }
-                checkpoint_path = os.path.join(args.out, "checkpoint-{:05d}.pth".format(epoch))
-                if epoch == args.epochs or not (epoch % args.saving):
-                    log.log("\n--- Saving Checkpoint ---")
-                    log.log("Path:\t\t {}".format(checkpoint_path))
-                    log.log("UUID:\t\t {}\n".format(UUID))
-                    torch.save(states, checkpoint_path)
+        if rank == 0:
+            UUID = uuid.uuid1()
+            states = {
+                "uuid": UUID,
+                "model_version": nn.module.version,
+                "producer_name": "Neat-EO.pink",
+                "producer_version": neo.__version__,
+                "model_licence": "MIT",
+                "domain": "pink.Neat-EO",  # reverse-DNS
+                "doc_string": nn.module.doc_string,
+                "shape_in": shape_in,
+                "shape_out": shape_out,
+                "state_dict": nn.state_dict(),
+                "epoch": epoch,
+                "nn": config["model"]["nn"],
+                "encoder": config["model"]["encoder"],
+                "optimizer": optimizer.state_dict(),
+                "loader": config["model"]["loader"],
+            }
+            checkpoint_path = os.path.join(args.out, "checkpoint-{:05d}.pth".format(epoch))
+            if epoch == args.epochs or not (epoch % args.saving):
+                log.log("\n--- Saving Checkpoint ---")
+                log.log("Path:\t\t {}".format(checkpoint_path))
+                log.log("UUID:\t\t {}\n".format(UUID))
+                torch.save(states, checkpoint_path)
 
-            dist.barrier()
-
-        if eval_dataset:
-            do_epoch(rank, eval_loader, config, args.classes_weights, log, csv_eval, nn, criterion, "eval", epoch)
+        dist.barrier()
 
     dist.destroy_process_group()
 
 
-def do_epoch(rank, loader, config, classes_weights, log, csv, nn, criterion, mode, epoch, optimizer=None):
-    def _do_epoch():
-        num_samples = 0
-        running_loss = 0.0
-        metrics = Metrics(config["train"]["metrics"], config["classes"], config=config)
+def do_epoch(rank, loader, config, classes_weights, log, nn, criterion, epoch, optimizer=None):
+    num_samples = 0
+    running_loss = 0.0
 
-        unit = "Batch/GPU" if mode == "train" else "Batch"
-        assert len(loader), "Empty or Inconsistent DataSet"
+    assert len(loader), "Empty or Inconsistent DataSet"
+    dataloader = tqdm(loader, desc="Train", unit="Batch/GPU", ascii=True) if rank == 0 else loader
 
-        dataloader = tqdm(loader, desc=mode.title(), unit=unit, ascii=True) if rank == 0 else loader
+    for images, masks, tiles, tiles_weights in dataloader:
+        images = images.cuda(rank, non_blocking=True)
+        masks = masks.cuda(rank, non_blocking=True)
 
-        for images, masks, tiles, tiles_weights in dataloader:
-            images = images.cuda(rank, non_blocking=True)
-            masks = masks.cuda(rank, non_blocking=True)
+        num_samples += int(images.size(0))
 
-            num_samples += int(images.size(0))
+        # Forward
+        outputs = nn(images)
+        loss = criterion(outputs, masks, classes_weights, tiles_weights, config)
+        running_loss += loss.item()
 
-            # Forward
-            outputs = nn(images)
-            loss = criterion(outputs, masks, classes_weights, tiles_weights, config)
-            running_loss += loss.item()
+        # Backward
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
-            # Backward
-            if mode == "train":
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-
-            # Metrics
-            if mode == "eval" and rank == 0:
-                for mask, output in zip(masks, outputs):
-                    metrics.add(mask, output)
-
-        assert num_samples > 0, "DataSet inconsistencies"
-
-        if rank == 0:
-            assert log and csv, "Unable to log"
-            log.log("{}{:.3f}".format("Loss:".ljust(25, " "), running_loss / num_samples))
-            csv_header = ['"Epoch"', '"Loss"'] if epoch == 1 else None
-            csv_line = [str(epoch)]
-            csv_line.append("{:.4f}".format(running_loss / num_samples))
-            if mode == "eval":
-                log.log("\n{}  μ\t   σ".format(" ".ljust(25, " ")))
-                for c, classe in enumerate(config["classes"]):
-                    if classe["weight"] != 0.0 and classe["color"] != "transparent":
-                        for k, v in metrics.get()[c].items():
-                            log.log("{}{:.3f}\t {:.3f}".format((classe["title"] + " " + k).ljust(25, " "), v["μ"], v["σ"]))
-                            csv_header.append('"{} μ{}"'.format(classe["title"], k)) if epoch == 1 else None
-                            csv_header.append('"{} σ{}"'.format(classe["title"], k)) if epoch == 1 else None
-                            csv_line.append("{:.3f}".format(v["μ"]))
-                            csv_line.append("{:.3f}".format(v["σ"]))
-
-            if epoch == 1:
-                csv.write(",".join(csv_header) + os.linesep)
-            csv.write(",".join(csv_line) + os.linesep)
-            csv.flush()
-
-    if mode == "train":
-        nn.train()
-        _do_epoch()
-
-    if mode == "eval":
-        nn.eval()
-        with torch.no_grad():
-            _do_epoch()
+    assert num_samples > 0, "DataSet inconsistencies"
+    if rank == 0:
+        log.log("{}{:.3f}".format("Loss:".ljust(25, " "), running_loss / num_samples))

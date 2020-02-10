@@ -87,10 +87,10 @@ it_pre:
 # Integration Tests: Training
 it_train:
 	@echo "==================================================================================="
-	export CUDA_VISIBLE_DEVICES=0 && neo train --config config.toml --bs 4 --lr 0.00025 --epochs 2 --train_dataset it/train --classes_weights `neo dataset --mode weights --dataset it/train --config config.toml` --out it/pth
-	export CUDA_VISIBLE_DEVICES=0,1 && neo train --config config.toml --bs 4 --lr 0.00025 --epochs 4 --resume --checkpoint it/pth/checkpoint-00002.pth --classes_weights auto --train_dataset it/train --eval_dataset it/eval --out it/pth
-	export CUDA_VISIBLE_DEVICES=0,1 && neo train --config config.toml --bs 4 --optimizer AdamW --lr 0.00025 --epochs 6 --resume --checkpoint it/pth/checkpoint-00004.pth --classes_weights auto --train_dataset it/train --eval_dataset it/eval --out it/pth
-	neo train --config config.toml --bs 4 --checkpoint it/pth/checkpoint-00006.pth --classes_weights auto --eval_dataset it/eval --out it/pth
+	export CUDA_VISIBLE_DEVICES=0 && neo train --config config.toml --bs 4 --lr 0.00025 --epochs 2 --dataset it/train --classes_weights `neo dataset --mode weights --dataset it/train --config config.toml` --out it/pth
+	export CUDA_VISIBLE_DEVICES=0,1 && neo train --config config.toml --bs 4 --lr 0.00025 --epochs 4 --resume --checkpoint it/pth/checkpoint-00002.pth --classes_weights auto --dataset it/train --out it/pth
+	export CUDA_VISIBLE_DEVICES=0,1 && neo train --config config.toml --bs 4 --optimizer AdamW --lr 0.00025 --epochs 6 --resume --checkpoint it/pth/checkpoint-00004.pth --classes_weights auto --dataset it/train --out it/pth
+	neo eval --config config.toml --bs 4 --checkpoint it/pth/checkpoint-00006.pth --classes_weights auto --dataset it/eval
 	neo info --checkpoint it/pth/checkpoint-00006.pth
 
 
@@ -149,7 +149,7 @@ check_tuto: check_101
 check_101:
 	@echo "==================================================================================="
 	@echo "Checking 101"
-	@mkdir -p tuto && cd tuto && mkdir 101 && sed -n -e '/```bash/,/```/ p' ../docs/101.md | sed -e '/```/d' > 101/.CHECK && cd 101 && sh .CHECK && cd ..
+	@mkdir -p tuto && cd tuto && mkdir -p 101 && sed -n -e '/```bash/,/```/ p' ../docs/101.md | sed -e '/```/d' > 101/.CHECK && cd 101 && sh .CHECK && cd ..
 	@cd tuto/101 && tar cf 101.tar ds/images ds/labels predict/images predict/osm predict/masks predict/compare predict/compare_side
 
 
