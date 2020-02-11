@@ -150,7 +150,7 @@ check_101:
 	@echo "==================================================================================="
 	@echo "Checking 101"
 	@mkdir -p tuto && cd tuto && mkdir -p 101 && sed -n -e '/```bash/,/```/ p' ../docs/101.md | sed -e '/```/d' > 101/.CHECK && cd 101 && sh .CHECK && cd ..
-	@cd tuto/101 && tar cf 101.tar ds/images ds/labels predict/images predict/osm predict/masks predict/compare predict/compare_side
+	@cd tuto/101 && tar cf 101.tar train/images train/labels predict/masks predict/compare predict/compare_side
 
 
 
