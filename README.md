@@ -183,7 +183,7 @@ Citing:
 -------
 ```
   @Manual{,
-    title = {Neat-EO.pink} Computer Vision framework for GeoSpatial Imagery},
+    title = {neat-EO} Computer Vision framework for GeoSpatial Imagery},
     author = {Olivier Courtin, Daniel J. Hofmann},
     organization = {DataPink},
     year = {2020},
