@@ -1,6 +1,6 @@
 <a href="https://twitter.com/neat_eo"><img src="https://img.shields.io/badge/Follow-neat_eo-ff69b4.svg" /></a> <a href="https://gitter.im/Neat-EO-pink/community"><img src="https://img.shields.io/gitter/room/Neat-EO-pink/community.svg?color=ff69b4&style=popout" /></a>
 
-<h1 align='center'>Neat-EO.pink</h1>
+<h1 align='center'>neat-EO</h1>
 <h2 align='center'>Efficient AI4EO OpenSource framework</h2>
 
 <p align=center>
@@ -29,7 +29,7 @@ Main Features:
 
 
 
-<img alt="Draw me Neat-EO.pink" src="https://raw.githubusercontent.com/datapink/neat-eo.pink/master/docs/img/readme/draw_me_neat_eo.png" />
+<img alt="Draw me neat-EO" src="https://raw.githubusercontent.com/datapink/neat-eo.pink/master/docs/img/readme/draw_me_neat_eo.png" />
 
 
  
@@ -77,7 +77,7 @@ pip3 install neat-EO
 ```
 # Neat-EO.pink [mandatory]
 sudo sh -c "apt update && apt install -y build-essential python3-pip"
-pip3 install Neat-EO.pink && export PATH=$PATH:~/.local/bin
+pip3 install neat-EO && export PATH=$PATH:~/.local/bin
 
 # NVIDIA GPU Drivers [mandatory]
 wget http://us.download.nvidia.com/XFree86/Linux-x86_64/435.21/NVIDIA-Linux-x86_64-435.21.run
@@ -91,7 +91,7 @@ sudo apt install -y apache2 && sudo ln -s ~ /var/www/html/neo
 ### NOTAS: 
 - Requires: Python 3.6 or 3.7
 - GPU with VRAM >= 8Go is mandatory
-- To test Neat-EO.pink install, launch in a new terminal: `neo info`
+- To test neat-EO install, launch in a new terminal: `neo info`
 - If needed, to remove pre-existing Nouveau driver: ```sudo sh -c "echo blacklist nouveau > /etc/modprobe.d/blacklist-nvidia-nouveau.conf && update-initramfs -u && reboot"```
 
 
@@ -100,7 +100,7 @@ sudo apt install -y apache2 && sudo ln -s ~ /var/www/html/neo
 Architecture:
 ------------
 
-Neat-EO.pink use cherry-picked Open Source libs among Deep Learning, Computer Vision and GIS stacks.
+neat-EO use cherry-picked Open Source libs among Deep Learning, Computer Vision and GIS stacks.
 
 <img alt="Stacks" src="https://raw.githubusercontent.com/datapink/Neat-EO.pink/master/docs/img/readme/stacks.png" />
 
@@ -187,6 +187,6 @@ Citing:
     author = {Olivier Courtin, Daniel J. Hofmann},
     organization = {DataPink},
     year = {2020},
-    url = {http://Neat-EO.pink},
+    url = {http://neat-EO.pink},
   }
 ```
