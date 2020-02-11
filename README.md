@@ -36,26 +36,26 @@ Main Features:
 Documentation:
 --------------
 ### Tutorial:
-- <a href="https://github.com/datapink/neat-eo.pink/blob/master/docs/101.md">Learn to use Neat-EO.pink, in a couple of hours</a>
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/101.md">Learn to use neat-EO, in a couple of hours</a>
 
 ### Config file:
-- <a href="https://github.com/datapink/neat-eo.pink/blob/master/docs/config.md">Neat-EO.pink configuration file</a>
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/config.md">neat-EO configuration file</a>
 
 ### Tools:
 
-- <a href="https://github.com/datapink/neat-eo.pink/blob/master/docs/tools.md#neo-cover">`neo cover`</a> Generate a tiles covering, in csv format: X,Y,Z
-- <a href="https://github.com/datapink/neat-eo.pink/blob/master/docs/tools.md#neo-download">`neo download`</a> Downloads tiles from a remote server (XYZ, WMS, or TMS)
-- <a href="https://github.com/datapink/neat-eo.pink/blob/master/docs/tools.md#neo-extract">`neo extract`</a> Extracts GeoJSON features from OpenStreetMap .pbf
-- <a href="https://github.com/datapink/neat-eo.pink/blob/master/docs/tools.md#neo-rasterize">`neo rasterize`</a> Rasterize vector features (GeoJSON or PostGIS), to raster tiles
-- <a href="https://github.com/datapink/neat-eo.pink/blob/master/docs/tools.md#neo-subset">`neo subset`</a> Filter images in a slippy map dir using a csv tiles cover
-- <a href="https://github.com/datapink/neat-eo.pink/blob/master/docs/tools.md#neo-tile">`neo tile`</a> Tile raster coverage
-- <a href="https://github.com/datapink/neat-eo.pink/blob/master/docs/tools.md#neo-train">`neo train`</a> Trains a model on a dataset
-- <a href="https://github.com/datapink/neat-eo.pink/blob/master/docs/tools.md#neo-eval">`neo eval`</a> Evals a model on a dataset
-- <a href="https://github.com/datapink/neat-eo.pink/blob/master/docs/tools.md#neo-export">`neo export`</a> Export a model to ONNX or Torch JIT
-- <a href="https://github.com/datapink/neat-eo.pink/blob/master/docs/tools.md#neo-predict">`neo predict`</a> Predict masks, from given inputs and an already trained model
-- <a href="https://github.com/datapink/neat-eo.pink/blob/master/docs/tools.md#neo-compare">`neo compare`</a> Compute composite images and/or metrics to compare several XYZ dirs
-- <a href="https://github.com/datapink/neat-eo.pink/blob/master/docs/tools.md#neo-vectorize">`neo vectorize`</a> Extract simplified GeoJSON features from segmentation masks
-- <a href="https://github.com/datapink/neat-eo.pink/blob/master/docs/tools.md#neo-info">`neo info`</a> Print Neat-EO.pink version informations
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-cover">`neo cover`</a> Generate a tiles covering, in csv format: X,Y,Z
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-download">`neo download`</a> Downloads tiles from a remote server (XYZ, WMS, or TMS)
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-extract">`neo extract`</a> Extracts GeoJSON features from OpenStreetMap .pbf
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-rasterize">`neo rasterize`</a> Rasterize vector features (GeoJSON or PostGIS), to raster tiles
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-subset">`neo subset`</a> Filter images in a slippy map dir using a csv tiles cover
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-tile">`neo tile`</a> Tile raster coverage
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-train">`neo train`</a> Trains a model on a dataset
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-eval">`neo eval`</a> Evals a model on a dataset
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-export">`neo export`</a> Export a model to ONNX or Torch JIT
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-predict">`neo predict`</a> Predict masks, from given inputs and an already trained model
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-compare">`neo compare`</a> Compute composite images and/or metrics to compare several XYZ dirs
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-vectorize">`neo vectorize`</a> Extract simplified GeoJSON features from segmentation masks
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-info">`neo info`</a> Print neat-EO version informations
 
 ### Presentations slides:
   - <a href="http://www.datapink.com/presentations/2020-fosdem.pdf">@FOSDEM 2020</a>
@@ -75,7 +75,7 @@ pip3 install neat-EO
 ### With Ubuntu 19.10, from scratch:
 
 ```
-# Neat-EO.pink [mandatory]
+# neat-EO [mandatory]
 sudo sh -c "apt update && apt install -y build-essential python3-pip"
 pip3 install neat-EO && export PATH=$PATH:~/.local/bin
 
@@ -102,7 +102,7 @@ Architecture:
 
 neat-EO use cherry-picked Open Source libs among Deep Learning, Computer Vision and GIS stacks.
 
-<img alt="Stacks" src="https://raw.githubusercontent.com/datapink/Neat-EO.pink/master/docs/img/readme/stacks.png" />
+<img alt="Stacks" src="https://raw.githubusercontent.com/datapink/neat-EO/master/docs/img/readme/stacks.png" />
 
 
 
@@ -135,20 +135,20 @@ Contributions and Services:
 
 - Pull Requests are welcome ! Feel free to send code...
   Don't hesitate either to initiate a prior discussion via <a href="https://gitter.im/Neat-EO-pink/community">gitter</a> or ticket on any implementation question.
-  And give also a look at <a href="https://github.com/datapink/Neat-EO.pink/blob/master/docs/makefile.md">Makefile rules</a>.
+  And give also a look at <a href="https://github.com/datapink/neat-EO/blob/master/docs/makefile.md">Makefile rules</a>.
 
 - If you want to collaborate through code production and maintenance on a long term basis, please get in touch, co-edition with an ad hoc governance can be considered.
 
 - If you want a new feature, but don't want to implement it, <a href="http://datapink.com">DataPink</a> provide core-dev services.
 
-- Expertise, assistance and training on Neat-EO.pink are also provided by <a href="http://datapink.com">DataPink</a>.
+- Expertise, assistance and training on neat-EO are also provided by <a href="http://datapink.com">DataPink</a>.
 
 - And if you want to support the whole project, because it means for your own business, funding is also welcome.
 
 
 ### Requests for funding:
 
-We've already identified several new features and research papers able to improve again Neat-EO.pink,
+We've already identified several new features and research papers able to improve again neat-EO,
 your funding would make a difference to implement them on a coming release:
 
 - Increase again accuracy :
