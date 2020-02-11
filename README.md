@@ -69,7 +69,7 @@ Installs:
 
 ### With PIP:
 ```
-pip3 install Neat-EO.pink
+pip3 install neat-EO
 ```
 
 ### With Ubuntu 19.10, from scratch:
