@@ -22,7 +22,7 @@ with open(path.join(here, "requirements.txt")) as f:
     install_requires = f.read().splitlines()
 
 setup(
-    name="Neat-EO.pink",
+    name="Neat-EO",
     version=version,
     url="https://github.com/datapink/Neat-EO.pink",
     download_url="https://github.com/datapink/Neat-EO.pink/releases",
