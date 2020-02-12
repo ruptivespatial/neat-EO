@@ -44,17 +44,17 @@ Documentation:
 ### Tools:
 
 - <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-cover">`neo cover`</a> Generate a tiles covering, in csv format: X,Y,Z
-- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-download">`neo download`</a> Downloads tiles from a remote server (XYZ, WMS, or TMS)
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-download">`neo download`</a> Downloads tiles from a Web Server (XYZ or WMS)
 - <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-extract">`neo extract`</a> Extracts GeoJSON features from OpenStreetMap .pbf
 - <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-rasterize">`neo rasterize`</a> Rasterize vector features (GeoJSON or PostGIS), to raster tiles
 - <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-subset">`neo subset`</a> Filter images in a slippy map dir using a csv tiles cover
-- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-tile">`neo tile`</a> Tile raster coverage
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-tile">`neo tile`</a> Tile a raster coverage
 - <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-train">`neo train`</a> Trains a model on a dataset
 - <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-eval">`neo eval`</a> Evals a model on a dataset
 - <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-export">`neo export`</a> Export a model to ONNX or Torch JIT
-- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-predict">`neo predict`</a> Predict masks, from given inputs and an already trained model
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-predict">`neo predict`</a> Predict masks, from a dataset, with an already trained model
 - <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-compare">`neo compare`</a> Compute composite images and/or metrics to compare several XYZ dirs
-- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-vectorize">`neo vectorize`</a> Extract simplified GeoJSON features from segmentation masks
+- <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-vectorize">`neo vectorize`</a> Extract GeoJSON features from predicted masks
 - <a href="https://github.com/datapink/neat-eo/blob/master/docs/tools.md#neo-info">`neo info`</a> Print neat-EO version informations
 
 ### Presentations slides:
