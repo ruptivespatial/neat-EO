@@ -97,8 +97,6 @@ def main(args):
 
     splits_path = os.path.join(os.path.expanduser(args.out), ".splits")
 
-    print("neo tile on CPU, with {} workers".format(args.workers), file=sys.stderr, flush=True)
-
     args.out = os.path.expanduser(args.out)
     if os.path.dirname(os.path.expanduser(args.out)):
         os.makedirs(args.out, exist_ok=True)
@@ -106,10 +104,16 @@ def main(args):
 
     raster = rasterio_open(os.path.expanduser(args.rasters[0]))
     args.bands = args.bands if args.bands else raster.indexes
-    print("rasters:{} bands:{}".format(args.rasters, args.bands), file=sys.stderr, flush=True)
+    raster.close()
+    print(
+        "neo tile {} rasters on bands {}, on CPU with {} workers".format(len(args.rasters), args.bands, args.workers),
+        file=sys.stderr,
+        flush=True,
+    )
 
     skip = []
     tiles_map = {}
+    total = 0
     for path in args.rasters:
         raster = rasterio_open(os.path.expanduser(path))
         assert set(args.bands).issubset(set(raster.indexes)), "Missing bands in raster {}".format(path)
@@ -123,13 +127,16 @@ def main(args):
 
         tiles = [mercantile.Tile(x=x, y=y, z=z) for x, y, z in mercantile.tiles(w, s, e, n, args.zoom)]
         tiles = list(set(tiles) & set(cover)) if cover else tiles
+        total += len(tiles)
 
         for tile in tiles:
             tile_key = (str(tile.x), str(tile.y), str(tile.z))
             if tile_key not in tiles_map.keys():
                 tiles_map[tile_key] = []
             tiles_map[tile_key].append(path)
-    assert len(tiles_map), "Nothing left to tile"
+
+        raster.close()
+    assert total, "Nothing left to tile"
 
     if len(args.bands) == 1 or args.label:
         ext = "png" if args.format is None else args.format
@@ -139,8 +146,7 @@ def main(args):
         ext = "tiff" if args.format is None else args.format
 
     tiles = []
-    progress = tqdm(total=len(tiles_map), ascii=True, unit="tile")
-    # Begin to tile plain tiles
+    progress = tqdm(desc="Coverage tiling", total=total, ascii=True, unit="tile")
     with futures.ThreadPoolExecutor(args.workers) as executor:
 
         def worker(path):
@@ -202,16 +208,19 @@ def main(args):
                     tile_label_to_file(out, mercantile.Tile(x=x, y=y, z=z), palette, args.nodata, image)
 
                 if len(tiles_map[tile_key]) == 1:
-                    progress.update()
                     tiled.append(mercantile.Tile(x=x, y=y, z=z))
 
+                progress.update()
+
+            raster.close()
             return tiled
 
         for tiled in executor.map(worker, args.rasters):
             if tiled is not None:
                 tiles.extend(tiled)
 
-    # Aggregate remaining tiles splits
+    total = sum([1 for tile_key in tiles_map.keys() if len(tiles_map[tile_key]) > 1])
+    progress = tqdm(desc="Aggregate splits", total=total, ascii=True, unit="tile")
     with futures.ThreadPoolExecutor(args.workers) as executor:
 
         def worker(tile_key):
